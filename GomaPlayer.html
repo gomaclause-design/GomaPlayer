@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GomaPlayer - By Gomaclause02</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- API de YouTube para controlar los videos -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <style>
+        :root {
+            --psp-black: #121212;
+            --screen-bg: #031525;
+            --xmb-blue: #0f4c81;
+            --highlight: #4da8da;
+            --danger: #ff4757;
+        }
+
+        body {
+            background-color: #050505;
+            background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+            font-family: 'Rajdhani', sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .psp-console {
+            background: linear-gradient(180deg, #1c1c1c 0%, #0a0a0a 100%);
+            border-radius: 60px;
+            box-shadow: 
+                inset 0 4px 10px rgba(255,255,255,0.1),
+                inset 0 -10px 20px rgba(0,0,0,0.8),
+                0 20px 50px rgba(0,0,0,0.9),
+                0 0 0 3px #222,
+                0 0 0 6px #000;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            max-width: 1050px;
+            width: 95vw;
+            height: 480px;
+            transform-origin: center;
+        }
+
+        @media (max-width: 1000px) { .psp-console { transform: scale(0.85); } }
+        @media (max-width: 800px) { .psp-console { transform: scale(0.7); } }
+        @media (max-width: 600px) { .psp-console { transform: scale(0.5); } }
+        @media (max-width: 400px) { .psp-console { transform: scale(0.4); } }
+
+        .controls-panel { width: 150px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .d-pad { position: relative; width: 110px; height: 110px; }
+        .d-btn { position: absolute; background: #111; border: 1px solid #333; box-shadow: inset 0 2px 5px rgba(255,255,255,0.15), 0 5px 10px rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; color: #666; cursor: pointer; transition: all 0.1s; }
+        .d-btn:active { transform: scale(0.95) translateY(2px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.8); color: #fff; }
+        .d-up { top: 0; left: 38px; width: 34px; height: 40px; border-radius: 8px 8px 0 0; }
+        .d-down { bottom: 0; left: 38px; width: 34px; height: 40px; border-radius: 0 0 8px 8px; }
+        .d-left { top: 38px; left: 0; width: 40px; height: 34px; border-radius: 8px 0 0 8px; }
+        .d-right { top: 38px; right: 0; width: 40px; height: 34px; border-radius: 0 8px 8px 0; }
+        .d-center { position: absolute; top: 38px; left: 38px; width: 34px; height: 34px; background: #111; }
+
+        .action-pad { position: relative; width: 120px; height: 120px; }
+        .action-btn { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: #111; border: 1px solid #333; box-shadow: inset 0 2px 5px rgba(255,255,255,0.15), 0 5px 10px rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; cursor: pointer; transition: all 0.1s; }
+        .action-btn:active { transform: scale(0.95) translateY(2px); }
+        .btn-triangle { top: 0; left: 41px; color: #2ecc71; }
+        .btn-circle { top: 41px; right: 0; color: #e74c3c; }
+        .btn-cross { bottom: 0; left: 41px; color: #3498db; }
+        .btn-square { top: 41px; left: 0; color: #9b59b6; }
+
+        .screen-bezel { flex: 1; height: 100%; background: #000; border-radius: 12px; padding: 15px; box-shadow: inset 0 0 25px rgba(0,0,0,1); position: relative; }
+        .screen-glass { width: 100%; height: calc(100% - 35px); background: var(--screen-bg); background-image: radial-gradient(circle at 50% 50%, var(--xmb-blue) 0%, #020810 100%); border-radius: 6px; position: relative; overflow: hidden; box-shadow: inset 0 0 40px rgba(0,0,0,0.9); }
+
+        .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; pointer-events: none; z-index: 50; }
+        
+        .xmb-bg-waves { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .wave-line { position: absolute; width: 200%; height: 2px; background: rgba(255,255,255,0.1); box-shadow: 0 0 10px rgba(255,255,255,0.2); top: 50%; left: -50%; animation: waveAnim 10s infinite alternate ease-in-out; }
+        .wave-line:nth-child(2) { top: 60%; transform: rotate(-5deg); animation-duration: 15s; background: rgba(77, 168, 218, 0.2); }
+        .wave-line:nth-child(3) { top: 40%; transform: rotate(5deg); animation-duration: 12s; }
+        @keyframes waveAnim { 0% { transform: translateY(-30px) rotate(2deg); } 100% { transform: translateY(30px) rotate(-2deg); } }
+
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: flex; flex-direction: column; padding: 15px 20px; box-sizing: border-box; }
+        .top-menu { display: flex; justify-content: flex-end; align-items: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px; margin-top: 15px; }
+        .tab { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); transition: all 0.3s; cursor: pointer; padding: 4px 12px; border-radius: 20px; }
+        .tab.active { color: #fff; background: rgba(255,255,255,0.1); box-shadow: 0 0 15px rgba(77, 168, 218, 0.4); text-shadow: 0 0 5px #fff; }
+
+        .view-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        .view-content.active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .list-item { padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; display: flex; align-items: center; gap: 15px; }
+        .list-item:hover, .list-item.selected { background: rgba(77, 168, 218, 0.2); border-color: rgba(77, 168, 218, 0.5); }
+        .action-icon { color: rgba(255,255,255,0.5); cursor: pointer; padding: 5px; transition: 0.2s; }
+        .action-icon:hover { color: #fff; transform: scale(1.1); }
+        .action-icon.delete:hover { color: var(--danger); text-shadow: 0 0 8px rgba(255,71,87,0.8); }
+
+        .player-disc { font-size: 70px; color: rgba(255,255,255,0.8); margin: 10px auto; filter: drop-shadow(0 0 20px rgba(77, 168, 218, 0.5)); }
+        .player-disc.spinning { animation: spin 4s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .toast-msg { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: rgba(0, 0, 0, 0.85); border: 1px solid var(--highlight); color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 100; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 5px 15px rgba(0,0,0,0.5); text-align: center; white-space: nowrap; }
+        .toast-msg.show { transform: translateX(-50%) translateY(0); }
+        
+        .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
+        
+        .progress-slider { -webkit-appearance: none; width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; outline: none; margin-top: 20px; cursor: pointer; }
+        .progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--highlight); cursor: pointer; box-shadow: 0 0 10px var(--highlight); }
+        
+        .video-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; z-index: 5; }
+        .video-container video, .video-container iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="psp-console">
+        <!-- Panel Izquierdo (D-Pad) -->
+        <div class="controls-panel">
+            <div class="d-pad">
+                <div class="d-center"></div>
+                <div class="d-btn d-up"><i class="fas fa-caret-up"></i></div>
+                <div class="d-btn d-down"><i class="fas fa-caret-down"></i></div>
+                <div class="d-btn d-left" onclick="switchTab(activeTab > 0 ? activeTab - 1 : 0)"><i class="fas fa-caret-left"></i></div>
+                <div class="d-btn d-right" onclick="switchTab(activeTab < 2 ? activeTab + 1 : 2)"><i class="fas fa-caret-right"></i></div>
+            </div>
+        </div>
+
+        <!-- Pantalla Central -->
+        <div class="screen-bezel">
+            <div class="screen-glass">
+                
+                <div class="absolute top-3 left-4 z-50 pointer-events-none">
+                    <h1 class="text-xl font-bold tracking-widest text-blue-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]">GomaPlayer</h1>
+                    <span class="text-[9px] uppercase tracking-[0.3em] text-blue-300 block -mt-1 opacity-80">By Gomaclause02</span>
+                </div>
+
+                <div class="scanlines"></div>
+                
+                <div class="xmb-bg-waves" id="waves-bg">
+                    <div class="wave-line"></div>
+                    <div class="wave-line"></div>
+                    <div class="wave-line"></div>
+                </div>
+
+                <!-- Video / YouTube de fondo a pantalla completa -->
+                <div class="video-container" id="video-container">
+                    <video id="video-display" playsinline></video>
+                    <!-- Contenedor para inyectar el iframe de YouTube -->
+                    <div id="youtube-display" class="w-full h-full hidden pointer-events-none"></div>
+                </div>
+
+                <div class="ui-layer">
+                    <div class="top-menu">
+                        <div class="tab active" id="tab-0" onclick="switchTab(0)"><i class="fas fa-download mr-1"></i> Importar</div>
+                        <div class="tab" id="tab-1" onclick="switchTab(1)"><i class="fas fa-folder-open mr-1"></i> Carpetas</div>
+                        <div class="tab" id="tab-2" onclick="switchTab(2)"><i class="fas fa-headphones mr-1"></i> Player</div>
+                    </div>
+
+                    <!-- VISTA 0: IMPORTAR -->
+                    <div class="view-content active" id="view-0">
+                        <div class="flex flex-col items-center justify-center h-full text-center px-4">
+                            <i class="fas fa-cloud-upload-alt text-5xl mb-4 text-blue-400 drop-shadow-[0_0_10px_rgba(77,168,218,0.5)]"></i>
+                            <h2 class="text-xl mb-2 font-bold tracking-widest uppercase">Añadir Música / Video</h2>
+                            <p class="text-gray-400 mb-4 text-xs">Selecciona la carpeta destino y elige tu método favorito, bebé.</p>
+                            
+                            <select id="import-folder-select" class="mb-5 bg-gray-900 border border-blue-500 text-sm rounded-lg px-3 py-2 text-white w-full max-w-[250px] outline-none cursor-pointer">
+                            </select>
+
+                            <input type="file" id="file-input" accept="audio/*, video/*" multiple class="hidden">
+                            
+                            <div class="flex flex-col gap-3 w-full max-w-[250px]">
+                                <button onclick="document.getElementById('file-input').click()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(37,99,235,0.5)] transition-all">
+                                    <i class="fas fa-file-audio mr-2"></i> ARCHIVO LOCAL
+                                </button>
+                                <button onclick="promptImportLink()" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-[0_0_15px_rgba(220,38,38,0.5)] transition-all">
+                                    <i class="fab fa-youtube mr-2"></i> ENLACE / YOUTUBE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VISTA 1: CARPETAS / ÁLBUMES -->
+                    <div class="view-content" id="view-1">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 id="folder-view-title" class="text-sm font-bold text-blue-300 uppercase tracking-widest"><i class="fas fa-hdd mr-2"></i>Mis Carpetas</h3>
+                            <button id="btn-add-folder" onclick="promptCreateFolder()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded border border-gray-600">
+                                <i class="fas fa-plus text-green-400 mr-1"></i> Nueva Carpeta
+                            </button>
+                            <button id="btn-back-folders" onclick="closeFolder()" class="hidden text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded border border-gray-600">
+                                <i class="fas fa-arrow-left mr-1"></i> Volver
+                            </button>
+                        </div>
+                        <div id="library-container" class="flex flex-col gap-1 pb-4"></div>
+                    </div>
+
+                    <!-- VISTA 2: REPRODUCTOR -->
+                    <div class="view-content" id="view-2">
+                        <div class="flex flex-col items-center h-full pt-2">
+                            <div class="text-[10px] uppercase text-blue-300 tracking-widest mb-2 drop-shadow-md" id="player-folder-name">Carpeta: -</div>
+                            
+                            <i class="fas fa-compact-disc player-disc mt-2" id="spin-disc"></i>
+                            
+                            <div class="mt-auto w-full flex flex-col items-center pb-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-8 rounded-b-lg">
+                                <h2 id="now-playing-title" class="text-xl font-bold tracking-wide text-center w-full truncate px-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-white">GomaPlayer By Gomaclause02</h2>
+                                <p id="now-playing-status" class="text-xs text-gray-300 tracking-widest uppercase mt-1 drop-shadow-md">Esperando pista...</p>
+                                
+                                <div class="flex items-center gap-8 mt-4 text-xl">
+                                    <button onclick="playPrev()" class="text-gray-200 hover:text-white transition drop-shadow-lg"><i class="fas fa-backward-step"></i></button>
+                                    <button onclick="togglePlay()" class="text-4xl text-blue-400 hover:text-blue-300 transition hover:scale-110 drop-shadow-[0_0_15px_rgba(0,0,0,1)]" id="play-btn">
+                                        <i class="fas fa-play-circle"></i>
+                                    </button>
+                                    <button onclick="playNext()" class="text-gray-200 hover:text-white transition drop-shadow-lg"><i class="fas fa-forward-step"></i></button>
+                                </div>
+
+                                <div class="w-full px-8 mt-4">
+                                    <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1" class="progress-slider drop-shadow-lg">
+                                    <div class="flex justify-between mt-2 text-[10px] text-gray-200 font-bold drop-shadow-md">
+                                        <span id="time-current">0:00</span>
+                                        <span id="time-total">0:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="toast-msg" id="toast">Mensaje</div>
+
+                <div id="custom-modal" class="modal-overlay">
+                    <div class="bg-gray-900 border border-blue-500 p-5 rounded-xl text-center w-[85%] max-w-[300px] shadow-[0_0_20px_rgba(0,0,0,1)]">
+                        <h3 id="modal-title" class="mb-3 text-sm font-bold uppercase tracking-wider text-blue-200">Título</h3>
+                        <p id="modal-text" class="text-xs text-gray-300 mb-4 hidden">Mensaje</p>
+                        <input type="text" id="modal-input" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 mb-4 text-white text-sm outline-none focus:border-blue-400" autocomplete="off">
+                        <div class="flex justify-center gap-3">
+                            <button onclick="closeModal()" class="px-4 py-1.5 bg-gray-800 border border-gray-600 rounded text-xs font-bold hover:bg-gray-700">CANCELAR</button>
+                            <button id="modal-confirm" class="px-4 py-1.5 bg-blue-600 border border-blue-500 rounded text-xs font-bold hover:bg-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.5)]">ACEPTAR</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="absolute bottom-2 left-0 w-full px-6 flex justify-between items-center z-[60]">
+            <div class="bg-gray-800 text-gray-400 text-[10px] px-3 py-1 rounded-t-md border border-gray-600 shadow-inner cursor-pointer hover:bg-gray-700">HOME</div>
+            <div class="flex gap-2">
+                <div class="bg-gray-800 text-gray-400 text-[10px] px-3 py-1 rounded-t-md border border-gray-600 shadow-inner cursor-pointer hover:bg-gray-700" onclick="changeVolume(-0.1)">- VOL</div>
+                <div class="bg-gray-800 text-gray-400 text-[10px] px-3 py-1 rounded-t-md border border-gray-600 shadow-inner cursor-pointer hover:bg-gray-700" onclick="changeVolume(0.1)">+ VOL</div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho (Botones de Acción) -->
+        <div class="controls-panel">
+            <div class="action-pad">
+                <div class="action-btn btn-triangle">&#x25B3;</div>
+                <div class="action-btn btn-circle" onclick="switchTab(0)">&#x25EF;</div>
+                <div class="action-btn btn-cross" onclick="actionCross()">&#x2573;</div>
+                <div class="action-btn btn-square">&#x25A1;</div>
+            </div>
+            
+            <div class="mt-12 flex flex-col items-center">
+                <span class="text-[9px] text-gray-500 font-bold tracking-widest">POWER</span>
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#2ecc71] mt-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        let db;
+        let folders = [];
+        let activeTab = 0; 
+        let currentViewFolderId = null; 
+        let playingFolderId = null; 
+        let playingSongIndex = -1;
+        let isPlaying = false;
+        
+        const tabs = [document.getElementById('tab-0'), document.getElementById('tab-1'), document.getElementById('tab-2')];
+        const views = [document.getElementById('view-0'), document.getElementById('view-1'), document.getElementById('view-2')];
+        const audioPlayer = document.getElementById('audio-player');
+        const videoDisplay = document.getElementById('video-display');
+        const videoContainer = document.getElementById('video-container');
+        const spinDisc = document.getElementById('spin-disc');
+        const progressSlider = document.getElementById('progress-slider');
+        const toast = document.getElementById('toast');
+        const fileInput = document.getElementById('file-input');
+        const libraryContainer = document.getElementById('library-container');
+        const modal = document.getElementById('custom-modal');
+        let modalCallback = null;
+
+        // --- SISTEMA YOUTUBE API ---
+        let ytPlayer = null;
+        let ytReady = false;
+        
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('youtube-display', {
+                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'fs': 0, 'modestbranding': 1, 'rel': 0 },
+                events: {
+                    'onReady': () => { ytReady = true; },
+                    'onStateChange': (e) => {
+                        if (e.data === YT.PlayerState.ENDED) playNext();
+                    }
+                }
+            });
+        }
+
+        // --- BASE DE DATOS ---
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open("GomaPlayerDB", 1);
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains('folders')) database.createObjectStore('folders', { keyPath: 'id' });
+                };
+                request.onsuccess = (e) => { db = e.target.result; resolve(); };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function loadFoldersFromDB() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('folders', 'readonly');
+                const request = tx.objectStore('folders').getAll();
+                request.onsuccess = () => {
+                    folders = request.result || [];
+                    folders.forEach(f => {
+                        f.songs.forEach(s => { if (s.file) s.url = URL.createObjectURL(s.file); });
+                    });
+                    if (folders.length === 0) {
+                        const default1 = { id: 'f_default', name: 'Favoritas', songs: [] };
+                        folders.push(default1); saveFolderToDB(default1);
+                    }
+                    resolve();
+                };
+                request.onerror = () => reject();
+            });
+        }
+
+        function saveFolderToDB(folder) {
+            const dbFolder = { id: folder.id, name: folder.name, songs: folder.songs.map(s => ({ title: s.title, file: s.file, type: s.type || (s.file ? s.file.type : ''), url: s.file ? null : s.url })) };
+            db.transaction('folders', 'readwrite').objectStore('folders').put(dbFolder);
+        }
+
+        function deleteFolderFromDB(id) {
+            folders = folders.filter(f => f.id !== id);
+            db.transaction('folders', 'readwrite').objectStore('folders').delete(id);
+        }
+
+        // --- UI & MODALES ---
+        function showToast(msg) {
+            toast.innerText = msg; toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function openModal(type, title, defaultText, callback) {
+            document.getElementById('modal-title').innerText = title;
+            const inputEl = document.getElementById('modal-input');
+            const textEl = document.getElementById('modal-text');
+            if (type === 'prompt') { inputEl.style.display = 'block'; textEl.style.display = 'none'; inputEl.value = defaultText || ''; setTimeout(() => inputEl.focus(), 100); } 
+            else { inputEl.style.display = 'none'; textEl.style.display = 'block'; textEl.innerText = defaultText; }
+            modalCallback = callback; modal.classList.add('active');
+        }
+
+        function closeModal() { modal.classList.remove('active'); modalCallback = null; }
+
+        document.getElementById('modal-confirm').addEventListener('click', () => {
+            if (modalCallback) modalCallback(document.getElementById('modal-input').style.display !== 'none' ? document.getElementById('modal-input').value.trim() : true);
+            closeModal();
+        });
+
+        function switchTab(index) {
+            activeTab = index;
+            tabs.forEach((t, i) => t.classList.toggle('active', i === index));
+            views.forEach((v, i) => v.classList.toggle('active', i === index));
+            if (index === 0) updateImportDropdown();
+            if (index === 1) renderLibrary();
+        }
+
+        function actionCross() {
+            if (activeTab === 0) fileInput.click();
+            if (activeTab === 2) togglePlay();
+        }
+
+        // --- CARPETAS Y CANCIONES ---
+        function promptCreateFolder() {
+            openModal('prompt', 'NUEVA CARPETA', 'Mi Nueva Carpeta', (name) => {
+                if (!name) return showToast('¡Amor, el nombre no puede estar vacío!');
+                const newFolder = { id: 'f_' + Date.now(), name: name, songs: [] };
+                folders.push(newFolder); saveFolderToDB(newFolder); showToast('¡Carpeta creada! 📁'); renderLibrary(); updateImportDropdown();
+            });
+        }
+
+        function promptRenameFolder(id, currentName, event) {
+            event.stopPropagation();
+            openModal('prompt', 'RENOMBRAR', currentName, (newName) => {
+                if (!newName) return; const f = folders.find(f => f.id === id);
+                if (f) { f.name = newName; saveFolderToDB(f); showToast('¡Listo bebé! ✨'); renderLibrary(); updateImportDropdown(); if (playingFolderId === id) document.getElementById('player-folder-name').innerText = `Carpeta: ${newName}`; }
+            });
+        }
+
+        function promptDeleteFolder(id, event) {
+            event.stopPropagation();
+            openModal('confirm', 'ELIMINAR', '¿Borrar esta carpeta y su música?', (confirm) => {
+                if (confirm) { deleteFolderFromDB(id); if (playingFolderId === id) stopAndResetPlayer(); showToast('Borrada 🗑️'); renderLibrary(); updateImportDropdown(); }
+            });
+        }
+
+        function openFolder(id) { currentViewFolderId = id; renderLibrary(); }
+        function closeFolder() { currentViewFolderId = null; renderLibrary(); }
+
+        function renderLibrary() {
+            libraryContainer.innerHTML = '';
+            if (currentViewFolderId === null) {
+                document.getElementById('folder-view-title').innerHTML = '<i class="fas fa-hdd mr-2"></i>Mis Carpetas';
+                document.getElementById('btn-add-folder').style.display = 'block'; document.getElementById('btn-back-folders').style.display = 'none';
+                if (folders.length === 0) return libraryContainer.innerHTML = `<div class="text-center text-gray-500 mt-6 text-sm">No hay carpetas. ¡Crea una, bebé!</div>`;
+                folders.forEach(folder => {
+                    const div = document.createElement('div'); div.className = 'list-item cursor-pointer'; div.onclick = () => openFolder(folder.id);
+                    div.innerHTML = `<div class="w-8 h-8 rounded bg-blue-900/50 flex items-center justify-center border border-blue-500/30"><i class="fas fa-folder text-blue-300"></i></div><div class="flex-1 truncate"><p class="font-bold text-sm text-blue-100">${folder.name}</p><p class="text-[10px] text-gray-400 uppercase">${folder.songs.length} pistas</p></div><div class="flex gap-3 px-2"><i class="fas fa-edit action-icon" onclick="promptRenameFolder('${folder.id}', '${folder.name}', event)"></i><i class="fas fa-trash-alt action-icon delete" onclick="promptDeleteFolder('${folder.id}', event)"></i></div>`;
+                    libraryContainer.appendChild(div);
+                });
+            } else {
+                const currentFolder = folders.find(f => f.id === currentViewFolderId);
+                if (!currentFolder) return closeFolder();
+                document.getElementById('folder-view-title').innerHTML = `<i class="fas fa-folder-open text-blue-400 mr-2"></i>${currentFolder.name}`;
+                document.getElementById('btn-add-folder').style.display = 'none'; document.getElementById('btn-back-folders').style.display = 'block';
+                if (currentFolder.songs.length === 0) return libraryContainer.innerHTML = `<div class="text-center text-gray-500 mt-6 text-sm">Carpeta vacía. Ponle musiquita 🎶</div>`;
+                
+                currentFolder.songs.forEach((song, index) => {
+                    const isSelected = (playingFolderId === currentFolder.id && playingSongIndex === index);
+                    const div = document.createElement('div'); div.className = `list-item ${isSelected ? 'selected border-blue-400 bg-blue-900/30' : ''}`;
+                    
+                    let icon = 'fa-music';
+                    if (song.type === 'youtube') icon = 'fa-youtube text-red-400';
+                    else if (song.type && song.type.startsWith('video')) icon = 'fa-video text-purple-400';
+
+                    div.innerHTML = `<div class="w-7 h-7 rounded-full bg-black flex items-center justify-center cursor-pointer" onclick="playSong('${currentFolder.id}', ${index})"><i class="fas ${isSelected && isPlaying ? 'fa-volume-up text-blue-400' : 'fa-play text-gray-400'} text-xs"></i></div><div class="flex-1 truncate cursor-pointer" onclick="playSong('${currentFolder.id}', ${index})"><p class="font-bold text-sm ${isSelected ? 'text-blue-300' : 'text-gray-200'} truncate"><i class="fab ${icon} text-[10px] mr-1 opacity-70"></i>${song.title}</p></div><i class="fas fa-times action-icon delete text-xs" onclick="deleteSong('${currentFolder.id}', ${index}, event)"></i>`;
+                    libraryContainer.appendChild(div);
+                });
+            }
+        }
+
+        function updateImportDropdown() {
+            const select = document.getElementById('import-folder-select'); select.innerHTML = '';
+            if (folders.length === 0) { select.innerHTML = '<option value="">No hay carpetas</option>'; select.disabled = true; return; }
+            select.disabled = false;
+            folders.forEach(f => { const opt = document.createElement('option'); opt.value = f.id; opt.innerText = `📁 ${f.name}`; select.appendChild(opt); });
+            if (currentViewFolderId) select.value = currentViewFolderId;
+        }
+
+        // --- IMPORTACIÓN MAGICA ---
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files; if (!files || files.length === 0) return;
+            const targetId = document.getElementById('import-folder-select').value; const f = folders.find(folder => folder.id === targetId);
+            if (!f) return showToast("¡Crea una carpeta primero! 📁");
+            
+            for (let i = 0; i < files.length; i++) {
+                f.songs.push({ title: files[i].name.replace(/\.[^/.]+$/, ""), file: files[i], url: URL.createObjectURL(files[i]), type: files[i].type });
+            }
+            saveFolderToDB(f); fileInput.value = ''; showToast(`¡Guardado perfecto, mi amor! 💖`);
+            currentViewFolderId = targetId; setTimeout(() => switchTab(1), 800);
+        });
+
+        function promptImportLink() {
+            const targetId = document.getElementById('import-folder-select').value;
+            if (!targetId) return showToast("¡Selecciona una carpeta, bebé! 📁");
+
+            openModal('prompt', 'ENLACE / YOUTUBE', 'Pega el link aquí', (url) => {
+                if (!url) return;
+                openModal('prompt', 'NOMBRE DE LA PISTA', 'Mi video favorito', (title) => {
+                    if (!title) return;
+                    const f = folders.find(folder => folder.id === targetId);
+                    
+                    let type = 'link-audio';
+                    let finalUrl = url;
+                    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]+)/);
+                    
+                    if (ytMatch) { type = 'youtube'; finalUrl = ytMatch[1]; }
+                    else if (url.match(/\.(mp4|webm|mkv)/i)) { type = 'video/mp4'; }
+
+                    f.songs.push({ title: title, file: null, url: finalUrl, type: type });
+                    saveFolderToDB(f); showToast(`¡Enlace añadido genial! 😍`);
+                    currentViewFolderId = targetId; setTimeout(() => switchTab(1), 800);
+                });
+            });
+        }
+
+        function deleteSong(folderId, songIndex, event) {
+            event.stopPropagation(); const f = folders.find(f => f.id === folderId); if (!f) return;
+            f.songs.splice(songIndex, 1); saveFolderToDB(f); showToast('Eliminada 🗑️');
+            if (playingFolderId === folderId) { if (playingSongIndex === songIndex) stopAndResetPlayer(); else if (playingSongIndex > songIndex) playingSongIndex--; }
+            renderLibrary();
+        }
+
+        // --- REPRODUCTOR ---
+        function stopAndResetPlayer() {
+            audioPlayer.pause(); videoDisplay.pause();
+            if (ytReady && ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+            audioPlayer.src = ''; videoDisplay.src = ''; playingFolderId = null; playingSongIndex = -1; isPlaying = false;
+            document.getElementById('now-playing-title').innerText = "GomaPlayer By Gomaclause02"; document.getElementById('now-playing-status').innerText = "Esperando pista..."; document.getElementById('player-folder-name').innerText = "Carpeta: -";
+            document.getElementById('play-btn').innerHTML = '<i class="fas fa-play-circle"></i>';
+            spinDisc.classList.remove('spinning'); spinDisc.style.display = 'block'; videoContainer.style.display = 'none'; progressSlider.value = 0; document.getElementById('waves-bg').style.display = 'block';
+        }
+
+        function getActivePlayer() {
+            if (!playingFolderId) return audioPlayer;
+            const song = folders.find(f => f.id === playingFolderId).songs[playingSongIndex];
+            if (song.type === 'youtube') return null;
+            return song.type.startsWith('video') ? videoDisplay : audioPlayer;
+        }
+
+        function playSong(folderId, index) {
+            const f = folders.find(f => f.id === folderId); if (!f || index < 0 || index >= f.songs.length) return;
+            
+            audioPlayer.pause(); videoDisplay.pause();
+            if (ytReady && ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+
+            playingFolderId = folderId; playingSongIndex = index; const song = f.songs[index];
+            document.getElementById('now-playing-title').innerText = song.title; document.getElementById('now-playing-status').innerText = "Reproduciendo"; document.getElementById('player-folder-name').innerText = `Carpeta: ${f.name}`;
+            
+            const isVideo = song.type.startsWith('video');
+            const isYouTube = song.type === 'youtube';
+
+            document.getElementById('youtube-display').classList.add('hidden');
+            videoDisplay.classList.add('hidden');
+
+            if (isYouTube || isVideo) {
+                spinDisc.style.display = 'none';
+                videoContainer.style.display = 'block';
+                document.getElementById('waves-bg').style.display = 'none'; 
+                
+                if (isYouTube) {
+                    const ytEl = document.getElementById('youtube-display');
+                    ytEl.classList.remove('hidden'); ytEl.classList.remove('pointer-events-none');
+                    if (ytReady) { ytPlayer.loadVideoById(song.url); isPlaying = true; }
+                } else {
+                    videoDisplay.classList.remove('hidden');
+                    videoDisplay.src = song.url; videoDisplay.play().then(() => isPlaying = true);
+                }
+            } else {
+                spinDisc.style.display = 'block'; videoContainer.style.display = 'none'; document.getElementById('waves-bg').style.display = 'block';
+                audioPlayer.src = song.url; audioPlayer.play().then(() => isPlaying = true);
+            }
+            
+            updatePlayerBtn(); renderLibrary(); if(activeTab !== 2) switchTab(2);
+        }
+
+        function togglePlay() {
+            if (!playingFolderId) return showToast("¡Amor, pon una cancioncita primero! 🎵");
+            const song = folders.find(f => f.id === playingFolderId).songs[playingSongIndex];
+            
+            if (song.type === 'youtube' && ytReady) {
+                if (isPlaying) { ytPlayer.pauseVideo(); isPlaying = false; }
+                else { ytPlayer.playVideo(); isPlaying = true; }
+            } else {
+                const player = getActivePlayer();
+                if (isPlaying) { player.pause(); isPlaying = false; }
+                else { player.play(); isPlaying = true; }
+            }
+            updatePlayerBtn(); if(activeTab === 1) renderLibrary();
+        }
+
+        function playNext() {
+            if (!playingFolderId) return; const f = folders.find(f => f.id === playingFolderId);
+            let next = playingSongIndex + 1; if (next >= f.songs.length) next = 0; playSong(playingFolderId, next);
+        }
+        function playPrev() {
+            if (!playingFolderId) return; const f = folders.find(f => f.id === playingFolderId);
+            let prev = playingSongIndex - 1; if (prev < 0) prev = f.songs.length - 1; playSong(playingFolderId, prev);
+        }
+
+        function updatePlayerBtn() {
+            const btn = document.getElementById('play-btn');
+            if (isPlaying) { btn.innerHTML = '<i class="fas fa-pause-circle"></i>'; spinDisc.classList.add('spinning'); } 
+            else { btn.innerHTML = '<i class="fas fa-play-circle"></i>'; spinDisc.classList.remove('spinning'); }
+        }
+
+        function formatTime(s) { if (isNaN(s)) return "0:00"; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec < 10 ? '0' : ''}${sec}`; }
+
+        function syncTimeUpdate(player) {
+            const current = player.currentTime; const total = player.duration;
+            document.getElementById('time-current').innerText = formatTime(current); document.getElementById('time-total').innerText = formatTime(total);
+            if (total) { progressSlider.max = total; progressSlider.value = current; }
+        }
+
+        audioPlayer.addEventListener('timeupdate', () => syncTimeUpdate(audioPlayer));
+        videoDisplay.addEventListener('timeupdate', () => syncTimeUpdate(videoDisplay));
+        audioPlayer.addEventListener('ended', playNext); videoDisplay.addEventListener('ended', playNext);
+
+        // Bucle mágico para el tiempo de YouTube
+        setInterval(() => {
+            if (isPlaying && playingFolderId) {
+                const song = folders.find(f => f.id === playingFolderId).songs[playingSongIndex];
+                if (song.type === 'youtube' && ytReady && ytPlayer && ytPlayer.getCurrentTime) {
+                    const current = ytPlayer.getCurrentTime(); const total = ytPlayer.getDuration();
+                    document.getElementById('time-current').innerText = formatTime(current); document.getElementById('time-total').innerText = formatTime(total);
+                    if (total) { progressSlider.max = total; progressSlider.value = current; }
+                }
+            }
+        }, 500);
+
+        progressSlider.addEventListener('input', (e) => {
+            const song = folders.find(f => f.id === playingFolderId)?.songs[playingSongIndex];
+            if (song && song.type === 'youtube' && ytReady) ytPlayer.seekTo(e.target.value, true);
+            else { const player = getActivePlayer(); if(player) player.currentTime = e.target.value; }
+        });
+
+        function changeVolume(amount) {
+            const newVol = Math.max(0, Math.min(1, audioPlayer.volume + amount));
+            audioPlayer.volume = newVol; videoDisplay.volume = newVol;
+            if (ytReady && ytPlayer) ytPlayer.setVolume(newVol * 100);
+        }
+
+        initDB().then(() => loadFoldersFromDB()).then(() => { updateImportDropdown(); renderLibrary(); }).catch(err => showToast("Error cargando BD."));
+    </script>
+</body>
+</html>
