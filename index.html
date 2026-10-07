@@ -48,16 +48,21 @@
             align-items: center;
             gap: 15px;
             position: relative;
-            max-width: 1050px;
-            width: 95vw;
-            height: 480px;
+            /* FIX PARA CELULARES: Dimensiones estrictas para que no se apachurre */
+            width: 950px;
+            height: 450px;
+            flex-shrink: 0;
             transform-origin: center;
         }
 
+        /* Escalado proporcional perfecto para cualquier pantalla */
         @media (max-width: 1000px) { .psp-console { transform: scale(0.85); } }
-        @media (max-width: 800px) { .psp-console { transform: scale(0.7); } }
-        @media (max-width: 600px) { .psp-console { transform: scale(0.5); } }
-        @media (max-width: 400px) { .psp-console { transform: scale(0.4); } }
+        @media (max-width: 850px) { .psp-console { transform: scale(0.75); } }
+        @media (max-width: 750px) { .psp-console { transform: scale(0.65); } }
+        @media (max-width: 650px) { .psp-console { transform: scale(0.55); } }
+        @media (max-width: 550px) { .psp-console { transform: scale(0.45); } }
+        @media (max-width: 450px) { .psp-console { transform: scale(0.35); } }
+        @media (max-width: 380px) { .psp-console { transform: scale(0.30); } }
 
         .controls-panel { width: 150px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .d-pad { position: relative; width: 110px; height: 110px; }
@@ -376,8 +381,13 @@
         function closeModal() { modal.classList.remove('active'); modalCallback = null; }
 
         document.getElementById('modal-confirm').addEventListener('click', () => {
-            if (modalCallback) modalCallback(document.getElementById('modal-input').style.display !== 'none' ? document.getElementById('modal-input').value.trim() : true);
+            const isPrompt = document.getElementById('modal-input').style.display !== 'none';
+            const valor = isPrompt ? document.getElementById('modal-input').value.trim() : true;
+            const callbackTemporal = modalCallback;
+            
             closeModal();
+            
+            if (callbackTemporal) callbackTemporal(valor);
         });
 
         function switchTab(index) {
@@ -479,21 +489,26 @@
 
             openModal('prompt', 'ENLACE / YOUTUBE', 'Pega el link aquí', (url) => {
                 if (!url) return;
-                openModal('prompt', 'NOMBRE DE LA PISTA', 'Mi video favorito', (title) => {
-                    if (!title) return;
-                    const f = folders.find(folder => folder.id === targetId);
-                    
-                    let type = 'link-audio';
-                    let finalUrl = url;
-                    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/))([^&?]+)/);
-                    
-                    if (ytMatch) { type = 'youtube'; finalUrl = ytMatch[1]; }
-                    else if (url.match(/\.(mp4|webm|mkv)/i)) { type = 'video/mp4'; }
+                
+                // FIX: Retraso mágico para que las ventanas no colisionen
+                setTimeout(() => {
+                    openModal('prompt', 'NOMBRE DE LA PISTA', 'Mi video favorito', (title) => {
+                        if (!title) return;
+                        const f = folders.find(folder => folder.id === targetId);
+                        
+                        let type = 'link-audio';
+                        let finalUrl = url;
+                        // FIX: Expresión regular mejorada para agarrar links de Shorts y Celulares
+                        const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
+                        
+                        if (ytMatch) { type = 'youtube'; finalUrl = ytMatch[1]; }
+                        else if (url.match(/\.(mp4|webm|mkv)/i)) { type = 'video/mp4'; }
 
-                    f.songs.push({ title: title, file: null, url: finalUrl, type: type });
-                    saveFolderToDB(f); showToast(`¡Enlace añadido genial! 😍`);
-                    currentViewFolderId = targetId; setTimeout(() => switchTab(1), 800);
-                });
+                        f.songs.push({ title: title, file: null, url: finalUrl, type: type });
+                        saveFolderToDB(f); showToast(`¡Enlace añadido genial! 😍`);
+                        currentViewFolderId = targetId; setTimeout(() => switchTab(1), 800);
+                    });
+                }, 300);
             });
         }
 
