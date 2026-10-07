@@ -34,6 +34,7 @@
             user-select: none;
         }
 
+        /* BLINDAJE PARA QUE NO SE ROMPA EN CELULAR */
         .psp-console {
             background: linear-gradient(180deg, #1c1c1c 0%, #0a0a0a 100%);
             border-radius: 60px;
@@ -45,26 +46,31 @@
                 0 0 0 6px #000;
             padding: 20px;
             display: flex;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important; /* Prohíbe que los botones se caigan abajo */
             align-items: center;
             gap: 15px;
             position: relative;
-            /* FIX PARA CELULARES: Dimensiones estrictas para que no se apachurre */
-            width: 950px;
-            height: 450px;
+            
+            width: 950px !important;
+            min-width: 950px !important;
+            height: 450px !important;
+            min-height: 450px !important;
             flex-shrink: 0;
             transform-origin: center;
         }
 
         /* Escalado proporcional perfecto para cualquier pantalla */
-        @media (max-width: 1000px) { .psp-console { transform: scale(0.85); } }
-        @media (max-width: 850px) { .psp-console { transform: scale(0.75); } }
-        @media (max-width: 750px) { .psp-console { transform: scale(0.65); } }
-        @media (max-width: 650px) { .psp-console { transform: scale(0.55); } }
+        @media (max-width: 1050px) { .psp-console { transform: scale(0.9); } }
+        @media (max-width: 950px) { .psp-console { transform: scale(0.8); } }
+        @media (max-width: 850px) { .psp-console { transform: scale(0.7); } }
+        @media (max-width: 750px) { .psp-console { transform: scale(0.6); } }
+        @media (max-width: 650px) { .psp-console { transform: scale(0.5); } }
         @media (max-width: 550px) { .psp-console { transform: scale(0.45); } }
         @media (max-width: 450px) { .psp-console { transform: scale(0.35); } }
-        @media (max-width: 380px) { .psp-console { transform: scale(0.30); } }
+        @media (max-width: 380px) { .psp-console { transform: scale(0.28); } }
 
-        .controls-panel { width: 150px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .controls-panel { width: 150px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
         .d-pad { position: relative; width: 110px; height: 110px; }
         .d-btn { position: absolute; background: #111; border: 1px solid #333; box-shadow: inset 0 2px 5px rgba(255,255,255,0.15), 0 5px 10px rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; color: #666; cursor: pointer; transition: all 0.1s; }
         .d-btn:active { transform: scale(0.95) translateY(2px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.8); color: #fff; }
@@ -82,7 +88,7 @@
         .btn-cross { bottom: 0; left: 41px; color: #3498db; }
         .btn-square { top: 41px; left: 0; color: #9b59b6; }
 
-        .screen-bezel { flex: 1; height: 100%; background: #000; border-radius: 12px; padding: 15px; box-shadow: inset 0 0 25px rgba(0,0,0,1); position: relative; }
+        .screen-bezel { flex: 1; height: 100%; background: #000; border-radius: 12px; padding: 15px; box-shadow: inset 0 0 25px rgba(0,0,0,1); position: relative; min-width: 500px; }
         .screen-glass { width: 100%; height: calc(100% - 35px); background: var(--screen-bg); background-image: radial-gradient(circle at 50% 50%, var(--xmb-blue) 0%, #020810 100%); border-radius: 6px; position: relative; overflow: hidden; box-shadow: inset 0 0 40px rgba(0,0,0,0.9); }
 
         .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2)); background-size: 100% 4px; pointer-events: none; z-index: 50; }
@@ -98,7 +104,8 @@
         .tab { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); transition: all 0.3s; cursor: pointer; padding: 4px 12px; border-radius: 20px; }
         .tab.active { color: #fff; background: rgba(255,255,255,0.1); box-shadow: 0 0 15px rgba(77, 168, 218, 0.4); text-shadow: 0 0 5px #fff; }
 
-        .view-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
+        /* Agregamos position relative para anclar controles */
+        .view-content { display: none; flex: 1; flex-direction: column; overflow-y: auto; overflow-x: hidden; position: relative; }
         .view-content.active { display: flex; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -212,29 +219,34 @@
 
                     <!-- VISTA 2: REPRODUCTOR -->
                     <div class="view-content" id="view-2">
-                        <div class="flex flex-col items-center h-full pt-2">
-                            <div class="text-[10px] uppercase text-blue-300 tracking-widest mb-2 drop-shadow-md" id="player-folder-name">Carpeta: -</div>
+                        <!-- Top Info -->
+                        <div class="w-full text-center mt-2 z-20">
+                            <div class="text-[10px] uppercase text-blue-300 tracking-widest drop-shadow-md bg-black/40 inline-block px-3 py-1 rounded-full" id="player-folder-name">Carpeta: -</div>
+                        </div>
+                        
+                        <!-- Disco -->
+                        <div class="flex-1 flex justify-center items-center z-10 pointer-events-none mb-16">
+                            <i class="fas fa-compact-disc player-disc mt-0" id="spin-disc"></i>
+                        </div>
+                        
+                        <!-- CONTROLES FIJOS AL FONDO (Soluciona el problema del texto flotante) -->
+                        <div class="absolute bottom-0 left-0 w-full flex flex-col items-center pb-3 bg-gradient-to-t from-black via-black/80 to-transparent pt-12 z-30">
+                            <h2 id="now-playing-title" class="text-xl font-bold tracking-wide text-center w-full truncate px-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-white">GomaPlayer By Gomaclause02</h2>
+                            <p id="now-playing-status" class="text-xs text-gray-300 tracking-widest uppercase mt-1 drop-shadow-md">Esperando pista...</p>
                             
-                            <i class="fas fa-compact-disc player-disc mt-2" id="spin-disc"></i>
-                            
-                            <div class="mt-auto w-full flex flex-col items-center pb-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-8 rounded-b-lg">
-                                <h2 id="now-playing-title" class="text-xl font-bold tracking-wide text-center w-full truncate px-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] text-white">GomaPlayer By Gomaclause02</h2>
-                                <p id="now-playing-status" class="text-xs text-gray-300 tracking-widest uppercase mt-1 drop-shadow-md">Esperando pista...</p>
-                                
-                                <div class="flex items-center gap-8 mt-4 text-xl">
-                                    <button onclick="playPrev()" class="text-gray-200 hover:text-white transition drop-shadow-lg"><i class="fas fa-backward-step"></i></button>
-                                    <button onclick="togglePlay()" class="text-4xl text-blue-400 hover:text-blue-300 transition hover:scale-110 drop-shadow-[0_0_15px_rgba(0,0,0,1)]" id="play-btn">
-                                        <i class="fas fa-play-circle"></i>
-                                    </button>
-                                    <button onclick="playNext()" class="text-gray-200 hover:text-white transition drop-shadow-lg"><i class="fas fa-forward-step"></i></button>
-                                </div>
+                            <div class="flex items-center gap-8 mt-3 text-xl">
+                                <button onclick="playPrev()" class="text-gray-200 hover:text-white transition drop-shadow-lg"><i class="fas fa-backward-step"></i></button>
+                                <button onclick="togglePlay()" class="text-4xl text-blue-400 hover:text-blue-300 transition hover:scale-110 drop-shadow-[0_0_15px_rgba(0,0,0,1)]" id="play-btn">
+                                    <i class="fas fa-play-circle"></i>
+                                </button>
+                                <button onclick="playNext()" class="text-gray-200 hover:text-white transition drop-shadow-lg"><i class="fas fa-forward-step"></i></button>
+                            </div>
 
-                                <div class="w-full px-8 mt-4">
-                                    <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1" class="progress-slider drop-shadow-lg">
-                                    <div class="flex justify-between mt-2 text-[10px] text-gray-200 font-bold drop-shadow-md">
-                                        <span id="time-current">0:00</span>
-                                        <span id="time-total">0:00</span>
-                                    </div>
+                            <div class="w-full px-8 mt-3">
+                                <input type="range" id="progress-slider" min="0" max="100" value="0" step="0.1" class="progress-slider drop-shadow-lg">
+                                <div class="flex justify-between mt-1 text-[10px] text-gray-200 font-bold drop-shadow-md">
+                                    <span id="time-current">0:00</span>
+                                    <span id="time-total">0:00</span>
                                 </div>
                             </div>
                         </div>
@@ -490,7 +502,7 @@
             openModal('prompt', 'ENLACE / YOUTUBE', 'Pega el link aquí', (url) => {
                 if (!url) return;
                 
-                // FIX: Retraso mágico para que las ventanas no colisionen
+                // Retraso mágico para que las ventanas no colisionen
                 setTimeout(() => {
                     openModal('prompt', 'NOMBRE DE LA PISTA', 'Mi video favorito', (title) => {
                         if (!title) return;
@@ -498,7 +510,6 @@
                         
                         let type = 'link-audio';
                         let finalUrl = url;
-                        // FIX: Expresión regular mejorada para agarrar links de Shorts y Celulares
                         const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
                         
                         if (ytMatch) { type = 'youtube'; finalUrl = ytMatch[1]; }
